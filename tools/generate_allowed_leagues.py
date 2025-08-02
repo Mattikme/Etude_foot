@@ -4,7 +4,7 @@ import requests
 import yaml
 from pathlib import Path
 
-API_KEY = "TA_CLE_API"  # 🔒 Place cette clé dans un fichier sécurisé ou .env
+API_KEY = "e1e76b8e3emsh2445ffb97db0128p158afdjsnb3175ce8d916"  # 🔒 Place cette clé dans un fichier sécurisé ou .env
 API_URL = "https://v3.football.api-sports.io/leagues"
 
 TARGET_KEYWORDS = [
