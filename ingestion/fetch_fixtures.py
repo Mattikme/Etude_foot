@@ -1,7 +1,7 @@
 # ingestion/fetch_fixtures.py
 # -----------------------------------------------------------------------------
-# Ce script permet de récupérer tous les matchs d'une saison en cours pour toutes
-# les ligues listées dans target_league_ids.yaml via l'API-Football.
+# Ce script récupère uniquement les matchs du jour pour toutes les ligues ciblées
+# en utilisant le paramètre "date" de l'API-Football, pour minimiser l’usage des quotas.
 # -----------------------------------------------------------------------------
 
 import os
@@ -10,27 +10,27 @@ import yaml
 from datetime import datetime
 from utils.request_handler import get
 
-# Détecter la saison actuelle (ex : saison 2023-2024 = 2023)
-SEASON = datetime.now().year if datetime.now().month >= 7 else datetime.now().year - 1
+# Date du jour au format YYYY-MM-DD
+TODAY = datetime.now().strftime("%Y-%m-%d")
 
-# Charger les IDs de ligue depuis le YAML
+# Charger les IDs de ligue depuis le fichier YAML
 with open("config/target_league_ids.yaml", "r") as f:
     target_leagues = yaml.safe_load(f)["leagues"]
 
 # Créer le dossier de sortie
 os.makedirs("data/raw", exist_ok=True)
 
-# Requête pour chaque ligue
+# Récupérer uniquement les matchs du jour pour chaque ligue
 for league_id in target_leagues:
-    params = {
-        "league": league_id,
-        "season": SEASON
-    }
     try:
+        params = {
+            "league": league_id,
+            "date": TODAY
+        }
         response = get("/fixtures", params=params)
-        output_path = f"data/raw/fixtures_{league_id}_{SEASON}.json"
+        output_path = f"data/raw/fixtures_{league_id}_{TODAY}.json"
         with open(output_path, "w") as f_out:
             json.dump(response, f_out, indent=2)
-        print(f"✅ Fixtures sauvegardés dans {output_path}")
+        print(f"✅ Matchs du {TODAY} sauvegardés pour ligue {league_id}")
     except Exception as e:
-        print(f"❌ Erreur lors de la récupération des fixtures pour ligue {league_id} : {e}")
+        print(f"❌ Erreur pour ligue {league_id} : {e}")
