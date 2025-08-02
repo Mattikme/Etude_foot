@@ -1,0 +1,191 @@
+Scrioipt started on 2025-08-02 23:07:41+00:00 [TERM="xterm-256color" TTY="/dev/pts/3" COLUMNS="35" LINES="34"]
+python pipeline/run_pipeline.py
+exit[?2004h[0;32m@Matttgic [0m➜ [1;34m/workspaces/api-football-predictor [0;36m([1;31mmain[0;36m) [0m$ python pipeline/run_pipeline.py
+[?2004l
+🚀 Running ingestion/fetch_fixtures.py...
+Traceback (most recent call last):
+  File "/workspaces/api-football-predictor/ingestion/fetch_fixtures.py", line 11, in <module>
+    from utils.request_handler import get
+ModuleNotFoundError: No module named 'utils'
+🚀 Running ingestion/fetch_stats.py...
+Traceback (most recent call last):
+  File "/workspaces/api-football-predictor/ingestion/fetch_stats.py", line 12, in <module>
+    from utils.request_handler import get
+ModuleNotFoundError: No module named 'utils'
+🚀 Running ingestion/fetch_lineups.py...
+Traceback (most recent call last):
+  File "/workspaces/api-football-predictor/ingestion/fetch_lineups.py", line 11, in <module>
+    from utils.request_handler import get
+ModuleNotFoundError: No module named 'utils'
+🚀 Running ingestion/fetch_events.py...
+Traceback (most recent call last):
+  File "/workspaces/api-football-predictor/ingestion/fetch_events.py", line 11, in <module>
+    from utils.request_handler import get
+ModuleNotFoundError: No module named 'utils'
+🚀 Running ingestion/fetch_injuries.py...
+Traceback (most recent call last):
+  File "/workspaces/api-football-predictor/ingestion/fetch_injuries.py", line 11, in <module>
+    from utils.request_handler import get
+ModuleNotFoundError: No module named 'utils'
+🚀 Running ingestion/fetch_standings.py...
+Traceback (most recent call last):
+  File "/workspaces/api-football-predictor/ingestion/fetch_standings.py", line 11, in <module>
+    from utils.request_handler import get
+ModuleNotFoundError: No module named 'utils'
+🚀 Running ingestion/fetch_player_stats.py...
+Traceback (most recent call last):
+  File "/workspaces/api-football-predictor/ingestion/fetch_player_stats.py", line 11, in <module>
+    from utils.request_handler import get
+ModuleNotFoundError: No module named 'utils'
+🚀 Running ingestion/fetch_pinnacle_odds.py...
+/workspaces/api-football-predictor/ingestion/fetch_pinnacle_odds.py:35: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  TODAY = datetime.utcnow().date().isoformat()
+Traceback (most recent call last):
+  File "/workspaces/api-football-predictor/ingestion/fetch_pinnacle_odds.py", line 51, in <module>
+    "odds_home": ml["home"],
+                 ~~^^^^^^^^
+TypeError: 'NoneType' object is not subscriptable
+🚀 Running preprocessing/match_odds_mapper.py...
+Traceback (most recent call last):
+  File "/workspaces/api-football-predictor/preprocessing/match_odds_mapper.py", line 12, in <module>
+    fixtures = pd.read_csv("data/processed/base_matches.csv")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/codespace/.local/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 1026, in read_csv
+    return _read(filepath_or_buffer, kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/codespace/.local/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 620, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/codespace/.local/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 1620, in __init__
+    self._engine = self._make_engine(f, self.engine)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/codespace/.local/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 1898, in _make_engine
+    return mapping[engine](f, **self.options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/codespace/.local/lib/python3.12/site-packages/pandas/io/parsers/c_parser_wrapper.py", line 93, in __init__
+    self._reader = parsers.TextReader(src, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pandas/_libs/parsers.pyx", line 581, in pandas._libs.parsers.TextReader.__cinit__
+pandas.errors.EmptyDataError: No columns to parse from file
+🚀 Running ingestion/merge_dataset.py...
+⚠️ Fixture manquant pour ligue 2, ignoré.
+⚠️ Fixture manquant pour ligue 3, ignoré.
+⚠️ Fixture manquant pour ligue 4, ignoré.
+⚠️ Fixture manquant pour ligue 6, ignoré.
+⚠️ Fixture manquant pour ligue 8, ignoré.
+⚠️ Fixture manquant pour ligue 10, ignoré.
+⚠️ Fixture manquant pour ligue 11, ignoré.
+⚠️ Fixture manquant pour ligue 13, ignoré.
+⚠️ Fixture manquant pour ligue 15, ignoré.
+⚠️ Fixture manquant pour ligue 16, ignoré.
+⚠️ Fixture manquant pour ligue 22, ignoré.
+⚠️ Fixture manquant pour ligue 36, ignoré.
+⚠️ Fixture manquant pour ligue 38, ignoré.
+⚠️ Fixture manquant pour ligue 39, ignoré.
+⚠️ Fixture manquant pour ligue 40, ignoré.
+⚠️ Fixture manquant pour ligue 45, ignoré.
+⚠️ Fixture manquant pour ligue 61, ignoré.
+⚠️ Fixture manquant pour ligue 62, ignoré.
+⚠️ Fixture manquant pour ligue 64, ignoré.
+⚠️ Fixture manquant pour ligue 66, ignoré.
+⚠️ Fixture manquant pour ligue 71, ignoré.
+⚠️ Fixture manquant pour ligue 78, ignoré.
+⚠️ Fixture manquant pour ligue 79, ignoré.
+⚠️ Fixture manquant pour ligue 81, ignoré.
+⚠️ Fixture manquant pour ligue 88, ignoré.
+⚠️ Fixture manquant pour ligue 94, ignoré.
+⚠️ Fixture manquant pour ligue 103, ignoré.
+⚠️ Fixture manquant pour ligue 106, ignoré.
+⚠️ Fixture manquant pour ligue 110, ignoré.
+⚠️ Fixture manquant pour ligue 113, ignoré.
+⚠️ Fixture manquant pour ligue 119, ignoré.
+⚠️ Fixture manquant pour ligue 135, ignoré.
+⚠️ Fixture manquant pour ligue 136, ignoré.
+⚠️ Fixture manquant pour ligue 137, ignoré.
+⚠️ Fixture manquant pour ligue 140, ignoré.
+⚠️ Fixture manquant pour ligue 141, ignoré.
+⚠️ Fixture manquant pour ligue 144, ignoré.
+⚠️ Fixture manquant pour ligue 164, ignoré.
+⚠️ Fixture manquant pour ligue 172, ignoré.
+⚠️ Fixture manquant pour ligue 179, ignoré.
+⚠️ Fixture manquant pour ligue 186, ignoré.
+⚠️ Fixture manquant pour ligue 197, ignoré.
+⚠️ Fixture manquant pour ligue 203, ignoré.
+⚠️ Fixture manquant pour ligue 210, ignoré.
+⚠️ Fixture manquant pour ligue 218, ignoré.
+⚠️ Fixture manquant pour ligue 239, ignoré.
+⚠️ Fixture manquant pour ligue 242, ignoré.
+⚠️ Fixture manquant pour ligue 244, ignoré.
+⚠️ Fixture manquant pour ligue 250, ignoré.
+⚠️ Fixture manquant pour ligue 252, ignoré.
+⚠️ Fixture manquant pour ligue 253, ignoré.
+⚠️ Fixture manquant pour ligue 261, ignoré.
+⚠️ Fixture manquant pour ligue 262, ignoré.
+⚠️ Fixture manquant pour ligue 265, ignoré.
+⚠️ Fixture manquant pour ligue 271, ignoré.
+⚠️ Fixture manquant pour ligue 283, ignoré.
+⚠️ Fixture manquant pour ligue 286, ignoré.
+⚠️ Fixture manquant pour ligue 315, ignoré.
+⚠️ Fixture manquant pour ligue 327, ignoré.
+⚠️ Fixture manquant pour ligue 329, ignoré.
+⚠️ Fixture manquant pour ligue 332, ignoré.
+⚠️ Fixture manquant pour ligue 333, ignoré.
+⚠️ Fixture manquant pour ligue 345, ignoré.
+⚠️ Fixture manquant pour ligue 355, ignoré.
+⚠️ Fixture manquant pour ligue 357, ignoré.
+⚠️ Fixture manquant pour ligue 362, ignoré.
+⚠️ Fixture manquant pour ligue 365, ignoré.
+⚠️ Fixture manquant pour ligue 373, ignoré.
+⚠️ Fixture manquant pour ligue 394, ignoré.
+⚠️ Fixture manquant pour ligue 408, ignoré.
+⚠️ Fixture manquant pour ligue 525, ignoré.
+⚠️ Fixture manquant pour ligue 528, ignoré.
+⚠️ Fixture manquant pour ligue 529, ignoré.
+⚠️ Fixture manquant pour ligue 531, ignoré.
+⚠️ Fixture manquant pour ligue 541, ignoré.
+⚠️ Fixture manquant pour ligue 556, ignoré.
+⚠️ Fixture manquant pour ligue 666, ignoré.
+⚠️ Fixture manquant pour ligue 743, ignoré.
+⚠️ Fixture manquant pour ligue 772, ignoré.
+⚠️ Fixture manquant pour ligue 848, ignoré.
+⚠️ Fixture manquant pour ligue 850, ignoré.
+⚠️ Fixture manquant pour ligue 858, ignoré.
+⚠️ Fixture manquant pour ligue 1040, ignoré.
+⚠️ Fixture manquant pour ligue 1083, ignoré.
+⚠️ Fixture manquant pour ligue 1186, ignoré.
+✅ Base fusionnée pour les matchs du jour : data/processed/base_matches.csv
+🚀 Running preprocessing/create_lstm_sequences.py...
+Traceback (most recent call last):
+  File "/workspaces/api-football-predictor/preprocessing/create_lstm_sequences.py", line 16, in <module>
+    base_df = pd.read_csv("data/processed/base_matches.csv")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/codespace/.local/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 1026, in read_csv
+    return _read(filepath_or_buffer, kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/codespace/.local/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 620, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/codespace/.local/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 1620, in __init__
+    self._engine = self._make_engine(f, self.engine)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/codespace/.local/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 1898, in _make_engine
+    return mapping[engine](f, **self.options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/codespace/.local/lib/python3.12/site-packages/pandas/io/parsers/c_parser_wrapper.py", line 93, in __init__
+    self._reader = parsers.TextReader(src, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pandas/_libs/parsers.pyx", line 581, in pandas._libs.parsers.TextReader.__cinit__
+pandas.errors.EmptyDataError: No columns to parse from file
+🚀 Running modeling/lstm_model.py...
+2025-08-02 23:07:45.502072: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2025-08-02 23:07:45.502929: I external/local_xla/xla/tsl/cuda/cudart_stub.cc:32] Could not find cuda drivers on your machine, GPU will not be used.
+2025-08-02 23:07:45.507363: I external/local_xla/xla/tsl/cuda/cudart_stub.cc:32] Could not find cuda drivers on your machine, GPU will not be used.
+2025-08-02 23:07:45.518524: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:467] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1754176065.536539   12093 cuda_dnn.cc:8579] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1754176065.541146   12093 cuda_blas.cc:1407] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+W0000 00:00:1754176065.556418   12093 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1754176065.556441   12093 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1754176065.556445   12093 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+W0000 00:00:1754176065.556449   12093 computation_placer.cc:177] computation placer already registered. Please check linkage and avoid linking the same target more than once.
+2025-08-02 23:07:45.560437: I tensorflow/core/platform/cpu_f
