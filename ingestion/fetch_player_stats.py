@@ -1,8 +1,7 @@
 # ingestion/fetch_player_stats.py
 # -----------------------------------------------------------------------------
-# Ce script permet de récupérer les statistiques individuelles des joueurs
-# pour chaque match via l'endpoint /fixtures/players, pour toutes les ligues
-# définies dans config/target_league_ids.yaml.
+# Ce script récupère les statistiques individuelles des joueurs uniquement
+# pour les matchs du jour, pour toutes les ligues définies dans target_league_ids.yaml.
 # -----------------------------------------------------------------------------
 
 import os
@@ -11,8 +10,9 @@ import yaml
 from datetime import datetime
 from utils.request_handler import get
 
-# Détection automatique de la saison actuelle
+# Saison dynamique
 SEASON = datetime.now().year if datetime.now().month >= 7 else datetime.now().year - 1
+TODAY = datetime.utcnow().date().isoformat()
 
 # Charger les ligues cibles
 with open("config/target_league_ids.yaml", "r") as f:
@@ -21,7 +21,7 @@ with open("config/target_league_ids.yaml", "r") as f:
 # Dossier de sortie
 os.makedirs("data/raw/player_stats", exist_ok=True)
 
-# Boucle sur les ligues
+# Boucler sur chaque ligue
 for league_id in target_leagues:
     fixtures_path = f"data/raw/fixtures_{league_id}_{SEASON}.json"
 
@@ -32,7 +32,12 @@ for league_id in target_leagues:
     with open(fixtures_path, "r") as f:
         fixtures = json.load(f)
 
-    fixture_ids = [match["fixture"]["id"] for match in fixtures["response"]]
+    # Filtrer uniquement les fixtures du jour
+    fixture_ids = [
+        match["fixture"]["id"]
+        for match in fixtures["response"]
+        if match["fixture"]["date"].startswith(TODAY)
+    ]
 
     for fixture_id in fixture_ids:
         try:
@@ -40,6 +45,6 @@ for league_id in target_leagues:
             output_path = f"data/raw/player_stats/player_stats_{fixture_id}.json"
             with open(output_path, "w") as f_out:
                 json.dump(players, f_out, indent=2)
-            print(f"✅ Statistiques joueurs enregistrées pour match {fixture_id}")
+            print(f"✅ Stats joueurs enregistrées pour match {fixture_id}")
         except Exception as e:
-            print(f"❌ Erreur pour fixture {fixture_id} : {e}")
+            print(f"❌ Erreur pour fixture {fixture_id} : {e}") 
