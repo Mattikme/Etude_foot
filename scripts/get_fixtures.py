@@ -29,7 +29,7 @@ def filter_fixtures(fixtures, target_league_ids):
 
 # === Étape 4 : Fonction principale ===
 def main():
-    api_key = "TA_CLE_API"  # 🔐 Remplace par ta vraie clé API
+    api_key = "e1e76b8e3emsh2445ffb97db0128p158afdjsnb3175ce8d916"  # 🔐 Remplace par ta vraie clé API
 
     # Charger les ligues à surveiller
     target_league_ids = load_target_leagues()
