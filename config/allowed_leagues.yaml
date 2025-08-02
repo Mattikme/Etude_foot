@@ -1,0 +1,53 @@
+# config/allowed_leagues.yaml
+# -----------------------------------------------------------------------------
+# Liste des ligues autorisées à inclure pour les prédictions quotidiennes
+# Format : { country: [ list_of_league_names ] }
+# -----------------------------------------------------------------------------
+
+Europe:
+  - Champions League
+  - Europa League
+  - Europa Conference
+  - Supercoupe d'Europe
+  - LDC (F)
+
+France:
+  - Coupe de France FFF
+  - Ligue 1 McDonalds
+  - Ligue 2 BKT
+
+Allemagne:
+  - Bundesliga 1
+  - Bundesliga 2
+  - Cpe Allemagne
+  - Super Coupe
+
+Angleterre:
+  - Premier League
+  - Championship
+  - EFL Cup
+  - Community Shield
+
+Espagne:
+  - LaLiga
+  - LaLiga 2
+  - Copa del Rey
+
+Italie:
+  - Serie A
+  - Serie B
+  - Coupe d'Italie
+
+International:
+  - CDM (Q) Europe
+  - CDM (Q) CONMEBOL
+  - Coupe du Monde USA 2026
+  - CAN
+
+Amérique:
+  - Copa Libertadores
+  - Copa Sudamericana
+  - Leagues Cup
+
+Argentine:
+  - D1 Argentine
