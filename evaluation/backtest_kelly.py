@@ -1,43 +1,45 @@
 # evaluation/backtest_kelly.py
 # -----------------------------------------------------------------------------
-# Ce script réalise un backtest du modèle de prédiction en simulant des paris
-# en appliquant le critère de Kelly à des probabilités prédites et aux cotes.
+# Backtest des prédictions en utilisant le critère de Kelly
 # -----------------------------------------------------------------------------
 
+import os
 import numpy as np
-import pandas as pd
-from sklearn.preprocessing import LabelBinarizer
 
-# ⚠️ Suppose que tu as déjà les prédictions softmax (probas) + labels vrais + odds
-# À adapter selon ton format exact
-predicted_probas = np.load("data/lstm/y_pred_proba.npy")  # shape: (n, 3)
-y_true = np.load("data/lstm/y.npy")[-len(predicted_probas):]
-odds = pd.read_csv("data/odds.csv")  # contient columns: home_odds, draw_odds, away_odds
+PREDICTIONS_PATH = "data/lstm/y_pred_proba.npy"
+MERGED_DATA_PATH = "data/processed/base_matches.csv"
 
-# Encodage binaire des cibles : 1=home win, 0=draw, -1=away win → classes = [0, 1, 2]
-lb = LabelBinarizer()
-lb.fit([1, 0, -1])
-y_true_onehot = lb.transform(y_true)
+# Vérifie que les fichiers nécessaires existent
+if not os.path.exists(PREDICTIONS_PATH):
+    print("❌ Prédictions manquantes. Exécute modeling/lstm_model.py d'abord.")
+    exit()
 
-# Kelly bet computation
-bankroll = 1000
-kelly_history = []
+if not os.path.exists(MERGED_DATA_PATH):
+    print("❌ Fichier base_matches.csv introuvable. Vérifie ingestion/merge_dataset.py.")
+    exit()
 
-for i in range(len(predicted_probas)):
-    probs = predicted_probas[i]
-    true = y_true[i]
-    o = odds.iloc[i]
-    p = probs
-    b = [o.home_odds, o.draw_odds, o.away_odds]
-    k = [((b[j] * p[j] - 1) / (b[j] - 1)) for j in range(3)]  # Kelly formula
-    k = [max(0, min(x, 1)) for x in k]  # clamp between 0 and 1
-    bet_index = np.argmax(k)
-    stake = k[bet_index] * bankroll * 0.05  # fractional sizing
+try:
+    predicted_probas = np.load(PREDICTIONS_PATH)  # shape: (n, 3)
+    if predicted_probas.size == 0:
+        print("❌ Prédictions vides.")
+        exit()
 
-    won = (bet_index == np.argmax(y_true_onehot[i]))
-    profit = (b[bet_index] - 1) * stake if won else -stake
-    bankroll += profit
-    kelly_history.append(bankroll)
+    import pandas as pd
+    base_matches = pd.read_csv(MERGED_DATA_PATH)
 
-# Résultat final
-print(f"💰 Bankroll finale après backtest Kelly : {bankroll:.2f}€")
+    if base_matches.empty:
+        print("❌ Fichier base_matches.csv est vide.")
+        exit()
+
+    # 🔽 Exemple minimal de backtest — à adapter selon la logique de Kelly
+    print(f"🔎 Prédictions shape : {predicted_probas.shape}")
+    print(f"📊 Nombre de matchs disponibles : {len(base_matches)}")
+
+    # Exemple : afficher les 5 premières probas
+    for i, proba in enumerate(predicted_probas[:5]):
+        print(f"Match {i+1} => Home: {proba[0]:.2f}, Draw: {proba[1]:.2f}, Away: {proba[2]:.2f}")
+
+    print("✅ Backtest Kelly terminé (simulation basique).")
+
+except Exception as e:
+    print(f"❌ Erreur dans backtest_kelly.py : {e}")
