@@ -1,42 +1,45 @@
 # ingestion/fetch_fixtures.py
-# -----------------------------------------------------------------------------
-# Récupère uniquement les matchs à venir ou du jour
-# pour les ligues listées dans target_league_ids.yaml,
-# et ignore les ligues sans fixtures programmés.
-# -----------------------------------------------------------------------------
-
-import os
-import json
-import yaml
+import os, json, yaml, time
 from datetime import datetime
 from utils.request_handler import get
 
 TODAY = datetime.now().date().isoformat()
+TIMEZONE = "Europe/Paris"
 
-# Charger les ligues cibles
-with open("config/target_league_ids.yaml", "r") as f:
+with open("config/target_league_ids.yaml") as f:
     target_leagues = yaml.safe_load(f)["leagues"]
 
-# Créer dossier de sortie
 os.makedirs("data/raw", exist_ok=True)
 
-# Pour chaque ligue, récupérer seulement si elle est active
 for league_id in target_leagues:
-    try:
-        params = {"league": league_id, "date": TODAY}
-        response = get("/fixtures", params=params)
-    except Exception as e:
-        print(f"❌ Erreur API pour ligue {league_id}: {e}")
+    params = {
+        "league": league_id,
+        "date": TODAY,
+        "status": "NS",  # uniquement les matchs à venir
+        "timezone": TIMEZONE
+    }
+    success = False
+    for attempt in range(3):
+        try:
+            resp = get("/fixtures", params=params)
+            if resp.get("get") == "fixtures":
+                success = True
+                break
+        except Exception as e:
+            print(f"❌ Ligue {league_id} erreur (tentative {attempt+1}) : {e}")
+        time.sleep(5)
+
+    if not success:
+        print(f"⚠️ Échec après retries – ligue {league_id}")
         continue
 
-    # Si aucune fixture, on ignore cette ligue
-    fixtures = response.get("response", [])
+    fixtures = resp.get("response", [])
     if not fixtures:
-        print(f"⚠️ Pas de matchs programmés aujourd'hui pour ligue {league_id}, ignorée.")
+        print(f"⚠️ Aucune rencontre NS aujourd’hui pour ligue {league_id}")
         continue
 
-    # Sinon on les sauvegarde
-    output_path = f"data/raw/fixtures_{league_id}_{TODAY}.json"
-    with open(output_path, "w") as f_out:
-        json.dump(response, f_out, indent=2)
-    print(f"✅ Matchs du jour pour ligue {league_id} sauvegardés ({len(fixtures)} fixtures)")
+    out = f"data/raw/fixtures_{league_id}_{TODAY}.json"
+    with open(out, "w") as f:
+        json.dump(resp, f, indent=2)
+    print(f"✅ Ligues {league_id} – {len(fixtures)} fixture(s) sauvegardée(s)")
+ 
