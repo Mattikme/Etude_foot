@@ -1,31 +1,36 @@
 # ingestion/fetch_fixtures.py
 # -----------------------------------------------------------------------------
-# Ce script permet de récupérer tous les matchs d'une ligue et saison spécifique
-# (ex : Premier League 2022/2023) depuis l'API-Football, et de les sauvegarder.
+# Ce script permet de récupérer tous les matchs d'une saison en cours pour toutes
+# les ligues listées dans target_league_ids.yaml via l'API-Football.
 # -----------------------------------------------------------------------------
 
 import os
 import json
+import yaml
+from datetime import datetime
 from utils.request_handler import get
 
-# Exemple : Premier League (league_id=39), saison 2022
-LEAGUE_ID = 39
-SEASON = 2022
+# Détecter la saison actuelle (ex : saison 2023-2024 = 2023)
+SEASON = datetime.now().year if datetime.now().month >= 7 else datetime.now().year - 1
 
-# Requête à l'API pour les fixtures de la ligue et saison donnée
-params = {
-    "league": LEAGUE_ID,
-    "season": SEASON
-}
-response = get("/fixtures", params=params)
+# Charger les IDs de ligue depuis le YAML
+with open("config/target_league_ids.yaml", "r") as f:
+    target_leagues = yaml.safe_load(f)["leagues"]
 
-# Créer le dossier de sortie si nécessaire
+# Créer le dossier de sortie
 os.makedirs("data/raw", exist_ok=True)
 
-# Enregistrer la réponse JSON brute
-output_path = f"data/raw/fixtures_{LEAGUE_ID}_{SEASON}.json"
-with open(output_path, "w") as f:
-    json.dump(response, f, indent=2)
-
-print(f"✅ Fixtures sauvegardés dans {output_path}")
- 
+# Requête pour chaque ligue
+for league_id in target_leagues:
+    params = {
+        "league": league_id,
+        "season": SEASON
+    }
+    try:
+        response = get("/fixtures", params=params)
+        output_path = f"data/raw/fixtures_{league_id}_{SEASON}.json"
+        with open(output_path, "w") as f_out:
+            json.dump(response, f_out, indent=2)
+        print(f"✅ Fixtures sauvegardés dans {output_path}")
+    except Exception as e:
+        print(f"❌ Erreur lors de la récupération des fixtures pour ligue {league_id} : {e}")
