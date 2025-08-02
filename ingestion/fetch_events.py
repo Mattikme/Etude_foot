@@ -1,8 +1,7 @@
 # ingestion/fetch_events.py
 # -----------------------------------------------------------------------------
-# Ce script récupère les événements (buts, cartons, remplacements...) de chaque match
-# via l'endpoint /fixtures/events. Il couvre toutes les ligues listées dans
-# config/target_league_ids.yaml pour la saison en cours.
+# Ce script récupère les événements (buts, cartons, remplacements...) uniquement
+# pour les matchs du jour via l'endpoint /fixtures/events.
 # -----------------------------------------------------------------------------
 
 import os
@@ -11,17 +10,18 @@ import yaml
 from datetime import datetime
 from utils.request_handler import get
 
-# Détection automatique de la saison (ex. 2023 pour la saison 2023-2024)
+# Détection de la saison actuelle
 SEASON = datetime.now().year if datetime.now().month >= 7 else datetime.now().year - 1
+TODAY = datetime.now().date().isoformat()  # Format 'YYYY-MM-DD'
 
-# Chargement des ligues cibles depuis le fichier YAML
+# Chargement des ligues cibles
 with open("config/target_league_ids.yaml", "r") as f:
     target_leagues = yaml.safe_load(f)["leagues"]
 
 # Création du dossier de sortie
 os.makedirs("data/raw/events", exist_ok=True)
 
-# Récupération des événements pour chaque fixture de chaque ligue
+# Parcourir chaque ligue
 for league_id in target_leagues:
     fixtures_path = f"data/raw/fixtures_{league_id}_{SEASON}.json"
 
@@ -32,7 +32,12 @@ for league_id in target_leagues:
     with open(fixtures_path, "r") as f:
         fixtures = json.load(f)
 
-    fixture_ids = [match["fixture"]["id"] for match in fixtures["response"]]
+    # Filtrer uniquement les matchs du jour
+    fixture_ids = [
+        match["fixture"]["id"]
+        for match in fixtures["response"]
+        if match["fixture"]["date"].startswith(TODAY)
+    ]
 
     for fixture_id in fixture_ids:
         try:
@@ -42,4 +47,4 @@ for league_id in target_leagues:
                 json.dump(events, f_out, indent=2)
             print(f"✅ Événements sauvegardés pour match {fixture_id}")
         except Exception as e:
-            print(f"❌ Erreur pour fixture {fixture_id} : {e}")
+            print(f"❌ Erreur pour fixture {fixture_id} : {e}") 
