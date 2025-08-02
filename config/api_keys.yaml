@@ -1,0 +1,14 @@
+# api-football-predictor/config/api_keys.yaml
+# ------------------------------------------------------------
+# Contient les clés d'authentification à l'API-Football
+# et éventuellement RapidAPI si besoin
+# ------------------------------------------------------------
+
+api_football:
+  key: "e1e76b8e3emsh2445ffb97db0128p158afdjsnb3175ce8d916"
+  host: "v3.football.api-sports.io"
+
+# Pour RapidAPI si tu passes par eux (facultatif)
+# rapidapi:
+#   key: "YOUR_RAPIDAPI_KEY"
+#   host: "api-football-v1.p.rapidapi.com"
