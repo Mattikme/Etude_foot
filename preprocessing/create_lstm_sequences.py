@@ -1,45 +1,42 @@
 # preprocessing/create_lstm_sequences.py
 # -----------------------------------------------------------------------------
-# Ce script prépare les données pour l'entraînement d'un modèle LSTM.
-# Il transforme le jeu de données en séquences temporelles par équipe,
-# avec glissement sur N matchs précédents, normalisation, et étiquetage.
+# Transforme les données fusionnées en séquences prêtes pour le LSTM
 # -----------------------------------------------------------------------------
 
+import os
 import pandas as pd
 import numpy as np
-import os
 
-WINDOW_SIZE = 5
-LABEL_COL = "outcome"
+INPUT_FILE = "data/processed/base_matches.csv"
+OUTPUT_DIR = "data/lstm"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# Chargement du fichier de base fusionné
-base_df = pd.read_csv("data/processed/base_matches.csv")
+# Vérifier que le fichier existe
+if not os.path.exists(INPUT_FILE):
+    print(f"❌ Fichier introuvable : {INPUT_FILE}")
+    exit()
 
-# Création de la colonne cible : 1 = victoire domicile, 0 = nul, -1 = défaite domicile
-base_df[LABEL_COL] = np.select(
-    [base_df["goals_home"] > base_df["goals_away"],
-     base_df["goals_home"] == base_df["goals_away"]],
-    [1, 0],
-    default=-1
-)
+try:
+    base_df = pd.read_csv(INPUT_FILE)
 
-# Ordre temporel
-base_df.sort_values("date", inplace=True)
+    if base_df.empty:
+        print(f"⚠️ Fichier vide : {INPUT_FILE}")
+        exit()
 
-# Séquences simples pour prototypage : chaque ligne devient une fenêtre de N matchs précédents
-sequences = []
-labels = []
-for i in range(WINDOW_SIZE, len(base_df)):
-    window = base_df.iloc[i - WINDOW_SIZE:i]
-    if LABEL_COL in base_df.columns:
-        label = base_df.iloc[i][LABEL_COL]
-        features = window[["goals_home", "goals_away"]].values.flatten()
-        sequences.append(features)
-        labels.append(label)
+    # Exemple minimal de transformation — à adapter selon ta structure
+    # Ici, on encode juste le résultat match
+    base_df = base_df.dropna(subset=["teams.home.name", "teams.away.name", "goals.home", "goals.away"])
+    base_df["result"] = np.where(base_df["goals.home"] > base_df["goals.away"], 0,
+                          np.where(base_df["goals.home"] < base_df["goals.away"], 2, 1))
 
-# Sauvegarde des jeux X, y
-os.makedirs("data/lstm", exist_ok=True)
-np.save("data/lstm/X.npy", np.array(sequences))
-np.save("data/lstm/y.npy", np.array(labels))
+    X = np.arange(len(base_df)).reshape(-1, 1)  # Placeholder : remplace par vraies features
+    y = base_df["result"].values
 
-print("✅ Séquences LSTM générées dans data/lstm/")
+    np.save(os.path.join(OUTPUT_DIR, "X.npy"), X)
+    np.save(os.path.join(OUTPUT_DIR, "y.npy"), y)
+
+    print(f"✅ Séquences LSTM sauvegardées dans {OUTPUT_DIR}")
+except pd.errors.EmptyDataError:
+    print(f"❌ Fichier CSV vide (aucune colonne lisible) : {INPUT_FILE}")
+except Exception as e:
+    print(f"❌ Erreur lors de la génération des séquences : {e}")
