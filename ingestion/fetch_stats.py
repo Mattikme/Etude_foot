@@ -1,32 +1,45 @@
 # ingestion/fetch_stats.py
 # -----------------------------------------------------------------------------
 # Ce script utilise les fichiers de fixtures pour extraire les statistiques
-# détaillées de chaque match via l'endpoint /fixtures/statistics de l'API-Football
+# détaillées de chaque match via l'endpoint /fixtures/statistics.
+# Fonctionne sur toutes les ligues définies dans target_league_ids.yaml
 # -----------------------------------------------------------------------------
 
 import os
 import json
+import yaml
+from datetime import datetime
 from utils.request_handler import get
 
-# Paramètres de la saison ciblée
-LEAGUE_ID = 39
-SEASON = 2022
+# Déterminer la saison automatiquement
+SEASON = datetime.now().year if datetime.now().month >= 7 else datetime.now().year - 1
 
-# Charger les fixtures déjà récupérés
-fixtures_path = f"data/raw/fixtures_{LEAGUE_ID}_{SEASON}.json"
-with open(fixtures_path, "r") as f:
-    fixtures = json.load(f)
-
-# Extraire tous les IDs de match (fixtures)
-fixture_ids = [match["fixture"]["id"] for match in fixtures["response"]]
+# Charger les ligues cibles
+with open("config/target_league_ids.yaml", "r") as f:
+    target_leagues = yaml.safe_load(f)["leagues"]
 
 # Répertoire de sortie
 os.makedirs("data/raw/stats", exist_ok=True)
 
-# Récupérer et sauvegarder les stats de chaque match individuellement
-for fixture_id in fixture_ids:
-    stats = get("/fixtures/statistics", params={"fixture": fixture_id})
-    output_path = f"data/raw/stats/statistics_{fixture_id}.json"
-    with open(output_path, "w") as f:
-        json.dump(stats, f, indent=2)
-    print(f"✅ Statistiques enregistrées pour match {fixture_id}")
+# Parcourir les fixtures pour chaque ligue
+for league_id in target_leagues:
+    fixtures_path = f"data/raw/fixtures_{league_id}_{SEASON}.json"
+    
+    if not os.path.exists(fixtures_path):
+        print(f"⚠️ Fixtures manquants pour ligue {league_id}, ignoré.")
+        continue
+
+    with open(fixtures_path, "r") as f:
+        fixtures = json.load(f)
+
+    fixture_ids = [match["fixture"]["id"] for match in fixtures["response"]]
+
+    for fixture_id in fixture_ids:
+        try:
+            stats = get("/fixtures/statistics", params={"fixture": fixture_id})
+            output_path = f"data/raw/stats/statistics_{fixture_id}.json"
+            with open(output_path, "w") as f_out:
+                json.dump(stats, f_out, indent=2)
+            print(f"✅ Statistiques enregistrées pour match {fixture_id}")
+        except Exception as e:
+            print(f"❌ Erreur pour fixture {fixture_id} : {e}")
