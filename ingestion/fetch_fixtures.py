@@ -1,7 +1,8 @@
 # ingestion/fetch_fixtures.py
 # -----------------------------------------------------------------------------
-# Ce script récupère uniquement les matchs du jour pour toutes les ligues ciblées
-# en utilisant le paramètre "date" de l'API-Football, pour minimiser l’usage des quotas.
+# Récupère uniquement les matchs à venir ou du jour
+# pour les ligues listées dans target_league_ids.yaml,
+# et ignore les ligues sans fixtures programmés.
 # -----------------------------------------------------------------------------
 
 import os
@@ -10,27 +11,32 @@ import yaml
 from datetime import datetime
 from utils.request_handler import get
 
-# Date du jour au format YYYY-MM-DD
-TODAY = datetime.now().strftime("%Y-%m-%d")
+TODAY = datetime.now().date().isoformat()
 
-# Charger les IDs de ligue depuis le fichier YAML
+# Charger les ligues cibles
 with open("config/target_league_ids.yaml", "r") as f:
     target_leagues = yaml.safe_load(f)["leagues"]
 
-# Créer le dossier de sortie
+# Créer dossier de sortie
 os.makedirs("data/raw", exist_ok=True)
 
-# Récupérer uniquement les matchs du jour pour chaque ligue
+# Pour chaque ligue, récupérer seulement si elle est active
 for league_id in target_leagues:
     try:
-        params = {
-            "league": league_id,
-            "date": TODAY
-        }
+        params = {"league": league_id, "date": TODAY}
         response = get("/fixtures", params=params)
-        output_path = f"data/raw/fixtures_{league_id}_{TODAY}.json"
-        with open(output_path, "w") as f_out:
-            json.dump(response, f_out, indent=2)
-        print(f"✅ Matchs du {TODAY} sauvegardés pour ligue {league_id}")
     except Exception as e:
-        print(f"❌ Erreur pour ligue {league_id} : {e}")
+        print(f"❌ Erreur API pour ligue {league_id}: {e}")
+        continue
+
+    # Si aucune fixture, on ignore cette ligue
+    fixtures = response.get("response", [])
+    if not fixtures:
+        print(f"⚠️ Pas de matchs programmés aujourd'hui pour ligue {league_id}, ignorée.")
+        continue
+
+    # Sinon on les sauvegarde
+    output_path = f"data/raw/fixtures_{league_id}_{TODAY}.json"
+    with open(output_path, "w") as f_out:
+        json.dump(response, f_out, indent=2)
+    print(f"✅ Matchs du jour pour ligue {league_id} sauvegardés ({len(fixtures)} fixtures)")
