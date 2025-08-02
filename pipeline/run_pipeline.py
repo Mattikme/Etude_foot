@@ -7,6 +7,10 @@
 # -----------------------------------------------------------------------------
 
 import os
+import sys
+
+# Ajouter la racine du projet au PATH pour les imports relatifs (ex: utils)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 steps = [
     "ingestion/fetch_fixtures.py",
