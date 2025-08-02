@@ -2,7 +2,7 @@ import requests
 import datetime
 import yaml
 
-API_KEY = "TA_CLE_API"
+API_KEY = "e1e76b8e3emsh2445ffb97db0128p158afdjsnb3175ce8d916"
 headers = {
     "x-rapidapi-key": API_KEY,
     "x-rapidapi-host": "v3.football.api-sports.io"
