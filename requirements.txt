@@ -1,0 +1,9 @@
+# api-football-predictor/requirements.txt
+# -----------------------------------------------------
+# Liste des librairies Python nécessaires au projet
+# -----------------------------------------------------
+requests           # Pour envoyer les requêtes HTTP à l'API
+python-dotenv      # Pour gérer les clés API dans un fichier .env (optionnel)
+PyYAML             # Pour lire les fichiers de configuration YAML (ex: clés, ligues)
+pandas             # Pour manipuler les données tabulaires
+retry              # Pour réessayer les appels API en cas d'échec temporaire
