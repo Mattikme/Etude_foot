@@ -1,0 +1,9 @@
+# config/pinnacle_keys.yaml
+# ------------------------------------------------------------
+# Contient les clés d'accès à l'API Pinnacle via RapidAPI
+# Ce fichier NE DOIT PAS ÊTRE versionné (ajouté au .gitignore)
+# ------------------------------------------------------------
+
+pinnacle:
+  key: "e1e76b8e3emsh2445ffb97db0128p158afdjsnb3175ce8d916"
+  host: "pinnacle-odds.p.rapidapi.com"
