@@ -1,8 +1,8 @@
 # ingestion/fetch_stats.py
 # -----------------------------------------------------------------------------
-# Ce script utilise les fichiers de fixtures pour extraire les statistiques
-# détaillées de chaque match via l'endpoint /fixtures/statistics.
-# Fonctionne sur toutes les ligues définies dans target_league_ids.yaml
+# Ce script récupère les statistiques détaillées pour les matchs du jour
+# uniquement (toutes ligues de target_league_ids.yaml).
+# Cela permet de limiter la consommation d'API.
 # -----------------------------------------------------------------------------
 
 import os
@@ -11,20 +11,16 @@ import yaml
 from datetime import datetime
 from utils.request_handler import get
 
-# Déterminer la saison automatiquement
 SEASON = datetime.now().year if datetime.now().month >= 7 else datetime.now().year - 1
+TODAY = datetime.now().date()
 
-# Charger les ligues cibles
 with open("config/target_league_ids.yaml", "r") as f:
     target_leagues = yaml.safe_load(f)["leagues"]
 
-# Répertoire de sortie
 os.makedirs("data/raw/stats", exist_ok=True)
 
-# Parcourir les fixtures pour chaque ligue
 for league_id in target_leagues:
     fixtures_path = f"data/raw/fixtures_{league_id}_{SEASON}.json"
-    
     if not os.path.exists(fixtures_path):
         print(f"⚠️ Fixtures manquants pour ligue {league_id}, ignoré.")
         continue
@@ -32,9 +28,14 @@ for league_id in target_leagues:
     with open(fixtures_path, "r") as f:
         fixtures = json.load(f)
 
-    fixture_ids = [match["fixture"]["id"] for match in fixtures["response"]]
+    for match in fixtures["response"]:
+        fixture = match["fixture"]
+        fixture_date = datetime.fromisoformat(fixture["date"]).date()
 
-    for fixture_id in fixture_ids:
+        if fixture_date != TODAY:
+            continue
+
+        fixture_id = fixture["id"]
         try:
             stats = get("/fixtures/statistics", params={"fixture": fixture_id})
             output_path = f"data/raw/stats/statistics_{fixture_id}.json"
@@ -42,4 +43,4 @@ for league_id in target_leagues:
                 json.dump(stats, f_out, indent=2)
             print(f"✅ Statistiques enregistrées pour match {fixture_id}")
         except Exception as e:
-            print(f"❌ Erreur pour fixture {fixture_id} : {e}")
+            print(f"❌ Erreur pour fixture {fixture_id} : {e}") 
