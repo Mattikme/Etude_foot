@@ -1,0 +1,30 @@
+# .gitignore
+# -------------------------------
+# Fichiers et dossiers à NE PAS versionner (confidentiel / temporaire)
+# -------------------------------
+
+# Clés API et config sensibles
+config/api_keys.yaml
+.env
+
+# Fichiers de cache ou temporaires
+__pycache__/
+*.py[cod]
+*.log
+
+# Notebooks générés
+.ipynb_checkpoints/
+
+# Données récupérées (gros fichiers)
+data/
+
+# Environnements virtuels
+venv/
+.env*/
+
+# Fichiers d'exécution système
+.DS_Store
+Thumbs.db
+
+# Autoriser ce fichier spécifique même si *.yaml est ignoré ailleurs
+!config/leagues.yaml
