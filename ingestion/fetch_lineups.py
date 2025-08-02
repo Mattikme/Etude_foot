@@ -1,7 +1,7 @@
 # ingestion/fetch_lineups.py
 # -----------------------------------------------------------------------------
-# Ce script permet de récupérer les compositions d'équipe (lineups) pour
-# tous les matchs des ligues listées dans config/target_league_ids.yaml.
+# Ce script récupère les compositions d'équipe uniquement pour les matchs du jour,
+# basés sur les ligues listées dans config/target_league_ids.yaml.
 # -----------------------------------------------------------------------------
 
 import os
@@ -10,35 +10,35 @@ import yaml
 from datetime import datetime
 from utils.request_handler import get
 
-# Saison dynamique : commence en juillet
+# Saison actuelle
 SEASON = datetime.now().year if datetime.now().month >= 7 else datetime.now().year - 1
+TODAY = datetime.now().date().isoformat()
 
 # Charger les ligues cibles
 with open("config/target_league_ids.yaml", "r") as f:
-    target_leagues = yaml.safe_load(f)["leagues"]
+    leagues = yaml.safe_load(f)["leagues"]
 
 # Répertoire de sortie
 os.makedirs("data/raw/lineups", exist_ok=True)
 
-# Parcourir les fixtures de chaque ligue
-for league_id in target_leagues:
-    fixtures_path = f"data/raw/fixtures_{league_id}_{SEASON}.json"
-
-    if not os.path.exists(fixtures_path):
-        print(f"⚠️ Pas de fixtures pour ligue {league_id}, ignoré.")
+# Parcourir les matchs du jour uniquement
+for league_id in leagues:
+    fixture_path = f"data/raw/fixtures_{league_id}_{SEASON}.json"
+    if not os.path.exists(fixture_path):
         continue
 
-    with open(fixtures_path, "r") as f:
-        fixtures = json.load(f)
+    with open(fixture_path, "r") as f:
+        fixtures = json.load(f)["response"]
 
-    fixture_ids = [match["fixture"]["id"] for match in fixtures["response"]]
-
-    for fixture_id in fixture_ids:
-        try:
-            lineups = get("/fixtures/lineups", params={"fixture": fixture_id})
-            output_path = f"data/raw/lineups/lineups_{fixture_id}.json"
-            with open(output_path, "w") as f_out:
-                json.dump(lineups, f_out, indent=2)
-            print(f"✅ Lineup enregistré pour match {fixture_id}")
-        except Exception as e:
-            print(f"❌ Erreur pour fixture {fixture_id} : {e}")
+    for match in fixtures:
+        fixture = match["fixture"]
+        if fixture["date"].startswith(TODAY):
+            fixture_id = fixture["id"]
+            try:
+                lineups = get("/fixtures/lineups", params={"fixture": fixture_id})
+                output_path = f"data/raw/lineups/lineups_{fixture_id}.json"
+                with open(output_path, "w") as f_out:
+                    json.dump(lineups, f_out, indent=2)
+                print(f"✅ Lineup enregistré pour match {fixture_id}")
+            except Exception as e:
+                print(f"❌ Erreur pour match {fixture_id} : {e}") 
