@@ -1,30 +1,32 @@
 # ingestion/fetch_standings.py
 # -----------------------------------------------------------------------------
-# Ce script récupère le classement complet d'une ligue pour une saison donnée
-# via l'endpoint /standings. Il peut être utilisé pour créer des features
-# comme la position actuelle ou l'écart de points entre équipes.
+# Ce script récupère le classement complet d'une ligue pour une saison donnée,
+# pour toutes les ligues définies dans config/target_league_ids.yaml.
 # -----------------------------------------------------------------------------
 
 import os
 import json
+import yaml
+from datetime import datetime
 from utils.request_handler import get
 
-LEAGUE_ID = 39
-SEASON = 2022
+# Détection de la saison en cours
+SEASON = datetime.now().year if datetime.now().month >= 7 else datetime.now().year - 1
 
-params = {
-    "league": LEAGUE_ID,
-    "season": SEASON
-}
-
-response = get("/standings", params=params)
+# Charger les ligues cibles
+with open("config/target_league_ids.yaml", "r") as f:
+    target_leagues = yaml.safe_load(f)["leagues"]
 
 # Répertoire de sortie
 os.makedirs("data/raw/standings", exist_ok=True)
 
-# Sauvegarde du JSON
-output_path = f"data/raw/standings/standings_{LEAGUE_ID}_{SEASON}.json"
-with open(output_path, "w") as f:
-    json.dump(response, f, indent=2)
-
-print(f"✅ Classement sauvegardé dans {output_path}")
+# Boucle sur chaque ligue pour appeler l'endpoint standings
+for league_id in target_leagues:
+    try:
+        response = get("/standings", params={"league": league_id, "season": SEASON})
+        output_path = f"data/raw/standings/standings_{league_id}_{SEASON}.json"
+        with open(output_path, "w") as f_out:
+            json.dump(response, f_out, indent=2)
+        print(f"✅ Classement sauvegardé pour ligue {league_id} dans {output_path}")
+    except Exception as e:
+        print(f"❌ Erreur pour ligue {league_id} : {e}")
