@@ -1,0 +1,23 @@
+# docker-compose.yml
+# -----------------------------------------------------------------------------
+# Lancement simultané du pipeline + dashboard Streamlit dans deux services
+# -----------------------------------------------------------------------------
+
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: football_pipeline
+    volumes:
+      - .:/app
+    command: python pipeline/run_pipeline.py
+
+  dashboard:
+    build: .
+    container_name: football_dashboard
+    volumes:
+      - .:/app
+    ports:
+      - "8501:8501"
+    command: streamlit run dashboard/streamlit_app.py --server.port=8501 --server.enableCORS=false
