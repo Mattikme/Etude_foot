@@ -1,63 +1,67 @@
 # ingestion/fetch_pinnacle_odds.py
-# -----------------------------------------------------------------------------
-# Ce script récupère les cotes Pinnacle (1X2) uniquement pour les matchs du jour.
-# Il filtre les marchés ouverts en Money Line (victoire, nul, défaite).
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+# Ce script récupère les cotes Pinnacle pour les matchs à venir
+# --------------------------------------------------------------------------
 
+import pandas as pd
+import datetime
 import os
-import json
 import yaml
-import requests
-from datetime import datetime
+from utils.request_handler import get
 
-# Charger la clé API
+# 📅 Récupère la date du jour au format ISO
+TODAY = datetime.datetime.now(datetime.UTC).date().isoformat()
+
+# 📂 Charge les clés API Pinnacle depuis le fichier YAML
 with open("config/pinnacle_keys.yaml", "r") as f:
-    keys = yaml.safe_load(f)
+    PINNACLE_KEYS = yaml.safe_load(f)
 
-headers = {
-    "x-rapidapi-key": keys["pinnacle"]["key"],
-    "x-rapidapi-host": keys["pinnacle"]["host"]
-}
+SPORT_ID = 29  # Football
 
-# Requête vers les marchés de football
-url = "https://pinnacle-odds.p.rapidapi.com/kit/v1/markets"
-params = {"sport_id": 1}
+def fetch_pinnacle_odds():
+    all_odds = []
 
-try:
-    response = requests.get(url, headers=headers, params=params)
-    response.raise_for_status()
-    data = response.json()
-except Exception as e:
-    print(f"❌ Erreur lors de l'appel API Pinnacle: {e}")
-    data = {}
+    for key in PINNACLE_KEYS:
+        response = get(
+            "https://api.pinnacle.com/v1/odds",
+            headers={"Authorization": f"Basic {key}"},
+            params={"sportId": SPORT_ID, "oddsFormat": "decimal"},
+        )
 
-# Date du jour (UTC)
-TODAY = datetime.utcnow().date().isoformat()
+        if not response or "leagues" not in response:
+            print("❌ Aucune donnée renvoyée depuis Pinnacle")
+            continue
 
-# Filtrer les cotes du jour
-odds = []
-for ev in data.get("events", []):
-    if not ev.get("is_have_odds"):
-        continue
-    if not ev["starts"].startswith(TODAY):
-        continue
-    try:
-        ml = ev["periods"]["num_0"]["money_line"]
-        odds.append({
-            "event_id": ev["event_id"],
-            "home": ev["home"],
-            "away": ev["away"],
-            "date": ev["starts"],
-            "odds_home": ml["home"],
-            "odds_draw": ml["draw"],
-            "odds_away": ml["away"]
-        })
-    except KeyError:
-        continue
+        for league in response["leagues"]:
+            for match in league.get("events", []):
+                fixture_id = match.get("id")
+                if not fixture_id:
+                    continue
 
-# Sauvegarde
-os.makedirs("data/raw/pinnacle", exist_ok=True)
-with open("data/raw/pinnacle/odds_soccer.json", "w") as f_out:
-    json.dump(odds, f_out, indent=2)
+                for market in match.get("periods", []):
+                    if market.get("number") != 0:
+                        continue  # On prend uniquement les temps réglementaires
 
-print("✅ Cotes Pinnacle du jour sauvegardées.")
+                    for outcome in market.get("moneyline", []):
+                        ml = outcome.get("main_line")
+
+                        if ml and all(k in ml for k in ["home", "draw", "away"]):
+                            row = {
+                                "fixture_id": fixture_id,
+                                "timestamp": match.get("starts"),
+                                "odds_home": ml["home"],
+                                "odds_draw": ml["draw"],
+                                "odds_away": ml["away"],
+                            }
+                            all_odds.append(row)
+                        else:
+                            print(f"❌ Cotes manquantes pour fixture {fixture_id}")
+
+    return pd.DataFrame(all_odds)
+
+# 💾 Sauvegarde les cotes
+if __name__ == "__main__":
+    df = fetch_pinnacle_odds()
+    os.makedirs("data/raw", exist_ok=True)
+    df.to_csv("data/raw/pinnacle_odds.csv", index=False)
+    print(f"✅ {len(df)} lignes de cotes sauvegardées.")
