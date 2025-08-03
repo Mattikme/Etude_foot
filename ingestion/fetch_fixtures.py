@@ -1,4 +1,7 @@
 # ingestion/fetch_fixtures.py
+import sys
+sys.path.append(".")
+
 import os, json, yaml, time
 from datetime import datetime
 from utils.request_handler import get
