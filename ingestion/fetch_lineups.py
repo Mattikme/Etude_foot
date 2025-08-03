@@ -27,7 +27,7 @@ os.makedirs("data/raw/lineups", exist_ok=True)
 
 # Parcourir les matchs du jour uniquement
 for league_id in leagues:
-    fixture_path = f"data/raw/fixtures_{league_id}_{SEASON}.json"
+    fixture_path = f"data/raw/fixtures_<league_id>_<date>.json"
     if not os.path.exists(fixture_path):
         continue
 
