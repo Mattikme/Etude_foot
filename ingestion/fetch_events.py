@@ -27,7 +27,7 @@ os.makedirs("data/raw/events", exist_ok=True)
 
 # Parcourir chaque ligue
 for league_id in target_leagues:
-    fixtures_path = fixtures_<league_id>_<date>.json
+    fixtures_path = f"data/raw/fixtures_<league_id>_<date>.json" 
 
     if not os.path.exists(fixtures_path):
         print(f"⚠️ Fixture manquant pour ligue {league_id}, fichier ignoré.")
