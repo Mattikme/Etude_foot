@@ -1,36 +1,48 @@
 # ingestion/fetch_standings.py
-# -----------------------------------------------------------------------------
-# Ce script récupère le classement complet d'une ligue pour une saison donnée,
-# pour toutes les ligues définies dans config/target_league_ids.yaml.
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Récupère les classements (standings) pour chaque ligue de la saison en cours.
+# Les fichiers sont enregistrés sous la forme standings_<league_id>_<saison>.json
+# dans data/raw/standings/.
+# ---------------------------------------------------------------------------
 
 import os
 import json
 import yaml
+import time
 from datetime import datetime
 
-import sys, os
+import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from utils.request_handler import get
 
-# Détection de la saison en cours
-SEASON = datetime.now().year if datetime.now().month >= 7 else datetime.now().year - 1
+# Saison courante (format AAAA), ajustez si nécessaire
+SEASON = datetime.now().year
 
-# Charger les ligues cibles
-with open("config/target_league_ids.yaml", "r") as f:
-    target_leagues = yaml.safe_load(f)["leagues"]
+# Charger la liste des ligues (IDs)
+with open("config/target_league_ids.yaml") as f:
+    data = yaml.safe_load(f)
+    leagues = data.get("leagues", data)
+    # Si dictionnaire "nom: id", prendre les valeurs; sinon, prendre la liste
+    if isinstance(leagues, dict):
+        target_leagues = [int(v) for v in leagues.values()]
+    else:
+        target_leagues = [int(x) for x in leagues]
 
-# Répertoire de sortie
 os.makedirs("data/raw/standings", exist_ok=True)
 
-# Boucle sur chaque ligue pour appeler l'endpoint standings
 for league_id in target_leagues:
+    params = {
+        "league": league_id,
+        "season": SEASON
+    }
     try:
-        response = get("/standings", params={"league": league_id, "season": SEASON})
-        output_path = f"data/raw/standings/standings_{league_id}_{SEASON}.json"
-        with open(output_path, "w") as f_out:
-            json.dump(response, f_out, indent=2)
-        print(f"✅ Classement sauvegardé pour ligue {league_id} dans {output_path}")
+        resp = get("/standings", params=params)
+        out_file = f"data/raw/standings/standings_{league_id}_{SEASON}.json"
+        with open(out_file, "w") as f_out:
+            json.dump(resp, f_out, indent=2)
+        print(f"✅ Classement sauvegardé pour ligue {league_id} dans {out_file}")
     except Exception as e:
         print(f"❌ Erreur pour ligue {league_id} : {e}")
+        # petite pause avant de poursuivre (optionnel)
+        time.sleep(2)
