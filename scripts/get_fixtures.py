@@ -1,45 +1,53 @@
-import requests
-import yaml
+# scripts/get_fixtures.py
+# -----------------------------------------------------------------------------
+# Exemple de récupération des rencontres du jour via API‑Football
+# Ce script est conservé à titre d'exemple mais il n'est plus utilisé par le
+# pipeline principal.  Il lit la liste des ligues cibles dans
+# `config/target_league_ids.yaml` et appelle l'endpoint `/fixtures` via
+# `utils.request_handler.get`, qui gère l'authentification et les retries.
+# -----------------------------------------------------------------------------
+
 from datetime import datetime
 from pathlib import Path
+import yaml
+import sys
+sys.path.append(".")
+from utils.request_handler import get  # type: ignore
 
-# === Étape 1 : Charger les ligues autorisées ===
-def load_target_leagues(yaml_path="config/target_league_ids.yaml"):
+
+def load_target_league_ids(yaml_path: str = "config/target_league_ids.yaml") -> set[str]:
+    """Charge les identifiants de ligue cibles depuis le YAML."""
     with open(yaml_path, "r") as file:
-        return set(yaml.safe_load(file)["leagues"].keys())
+        data = yaml.safe_load(file)
+        # Le fichier peut stocker une liste directement ou un mapping id→nom
+        leagues = data.get("leagues", data)
+        if isinstance(leagues, dict):
+            return set(str(key) for key in leagues.keys())
+        return set(str(item) for item in leagues)
 
-# === Étape 2 : Récupérer les fixtures du jour via API-Football ===
-def get_fixtures_today(api_key):
-    url = "https://v3.football.api-sports.io/fixtures"
-    params = {
-        "date": datetime.today().strftime("%Y-%m-%d")
-    }
-    headers = {
-        "x-rapidapi-host": "v3.football.api-sports.io",
-        "x-rapidapi-key": api_key
-    }
-    response = requests.get(url, headers=headers, params=params)
-    return response.json()["response"]
 
-# === Étape 3 : Filtrer les fixtures selon les ligues autorisées ===
-def filter_fixtures(fixtures, target_league_ids):
+def get_fixtures_today(date: str) -> list[dict]:
+    """Récupère les fixtures du jour via l'API-Football."""
+    response = get(
+        "/fixtures",
+        params={"date": date},
+    )
+    return response.get("response", []) if isinstance(response, dict) else []
+
+
+def filter_fixtures(fixtures: list[dict], target_league_ids: set[str]) -> list[dict]:
+    """Filtre les rencontres pour ne garder que celles des ligues cibles."""
     return [
         f for f in fixtures if str(f["league"]["id"]) in target_league_ids
     ]
 
-# === Étape 4 : Fonction principale ===
-def main():
-    api_key = "e1e76b8e3emsh2445ffb97db0128p158afdjsnb3175ce8d916"  # 🔐 Remplace par ta vraie clé API
 
-    # Charger les ligues à surveiller
-    target_league_ids = load_target_leagues()
-
-    # Récupérer les matchs du jour
-    fixtures = get_fixtures_today(api_key)
-
-    # Filtrer par ligues suivies
-    filtered = filter_fixtures(fixtures, target_league_ids)
-
+def main() -> None:
+    # Date du jour au format YYYY-MM-DD
+    today = datetime.now().strftime("%Y-%m-%d")
+    target_leagues = load_target_league_ids()
+    fixtures = get_fixtures_today(today)
+    filtered = filter_fixtures(fixtures, target_leagues)
     # Affichage simple
     for match in filtered:
         league = match["league"]["name"]
@@ -47,5 +55,6 @@ def main():
         away = match["teams"]["away"]["name"]
         print(f"{league}: {home} vs {away}")
 
+
 if __name__ == "__main__":
-    main()
+    main() 
