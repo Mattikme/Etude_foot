@@ -7,6 +7,10 @@ import pandas as pd
 import datetime
 import os
 import yaml
+
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from utils.request_handler import get
 
 # 📅 Récupère la date du jour au format ISO
