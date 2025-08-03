@@ -1,68 +1,60 @@
 # ingestion/fetch_fixtures.py
-# -----------------------------------------------------------------------------
-# Récupère toutes les rencontres du jour pour les ligues cibles.
-# Ce script appelle l'endpoint `/fixtures` avec le paramètre `date=YYYY-MM-DD`
-# afin de récupérer l'ensemble des matchs programmés aujourd'hui, au lieu de
-# seulement le prochain match de chaque ligue.  Les résultats sont enregistrés
-# dans `data/raw/fixtures_<league_id>_<date>.json`.
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Récupère toutes les rencontres du jour et les répartit par ligue.
+# Les fichiers sont enregistrés dans data/raw/fixtures_<league_id>_<date>.json
+# ---------------------------------------------------------------------------
 
 import os
 import json
 import yaml
-import time
 from datetime import datetime
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+# Ajouter la racine du projet au sys.path pour import utils
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils.request_handler import get
 
 TIMEZONE = "Europe/Paris"
-
-# Charger la liste des ligues cibles
-with open("config/target_league_ids.yaml") as f:
-    data = yaml.safe_load(f)
-    # La clé peut être une liste ou un mapping
-    leagues = data.get("leagues", data)
-    if isinstance(leagues, dict):
-        target_leagues = list(leagues.values())
-    else:
-        target_leagues = list(leagues)
-
-os.makedirs("data/raw", exist_ok=True)
-
-# Date du jour au format ISO (YYYY-MM-DD)
 today = datetime.now().strftime("%Y-%m-%d")
 
+# Charger les IDs des ligues cibles
+with open("config/target_league_ids.yaml") as f:
+    cfg = yaml.safe_load(f)
+    leagues = cfg.get("leagues", cfg)
+    if isinstance(leagues, dict):
+        target_leagues = [int(v) for v in leagues.values()]
+    else:
+        target_leagues = [int(x) for x in leagues]
+
+# Créer le dossier de sortie
+os.makedirs("data/raw", exist_ok=True)
+
+# 1. Appel global aux fixtures du jour
+try:
+    all_fixtures = get("/fixtures", params={"date": today, "timezone": TIMEZONE})
+    fixtures_list = all_fixtures.get("response", [])
+except Exception as e:
+    print(f"❌ Erreur lors de la récupération des fixtures du jour : {e}")
+    fixtures_list = []
+
+# 2. Filtrer par ligue et sauvegarder
 for league_id in target_leagues:
-    params = {
-        "league": league_id,
-        "date": today,
-        "timezone": TIMEZONE
-    }
-    success = False
-    resp: dict | None = None
-    for attempt in range(3):
-        try:
-            resp = get("/fixtures", params=params)
-            # L'API renvoie un champ "get" indiquant l'endpoint appelé
-            if isinstance(resp, dict) and resp.get("get") == "fixtures":
-                success = True
-                break
-        except Exception as e:
-            print(f"❌ Ligue {league_id} erreur (tentative {attempt+1}) : {e}")
-        time.sleep(5)
-
-    if not success or resp is None:
-        print(f"⚠️ Échec après retries – ligue {league_id}")
-        continue
-
-    fixtures = resp.get("response", [])
-    if not fixtures:
+    matches = [f for f in fixtures_list if f.get("league", {}).get("id") == league_id]
+    if not matches:
         print(f"⚠️ Aucun match programmé aujourd'hui pour la ligue {league_id}")
         continue
 
-    out = f"data/raw/fixtures_{league_id}_{today}.json"
-    with open(out, "w") as f_out:
-        json.dump(resp, f_out, indent=2)
-    print(f"✅ Ligue {league_id} – {len(fixtures)} match(s) sauvegardé(s) dans {out}")
+    # On reconstitue une réponse similaire à l'API pour garder le même format
+    response = {
+        "get": "fixtures",
+        "parameters": {"league": league_id, "date": today, "timezone": TIMEZONE},
+        "errors": [],
+        "results": len(matches),
+        "paging": {"current": 1, "total": 1},
+        "response": matches,
+    }
+    out_path = f"data/raw/fixtures_{league_id}_{today}.json"
+    with open(out_path, "w") as f_out:
+        json.dump(response, f_out, indent=2)
+    print(f"✅ {len(matches)} match(s) sauvegardé(s) pour la ligue {league_id} dans {out_path}")
+ 
