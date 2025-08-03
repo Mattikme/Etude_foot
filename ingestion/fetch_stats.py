@@ -9,6 +9,10 @@ import os
 import json
 import yaml
 from datetime import datetime
+
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from utils.request_handler import get
 
 SEASON = datetime.now().year if datetime.now().month >= 7 else datetime.now().year - 1
