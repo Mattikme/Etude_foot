@@ -57,4 +57,27 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    main()
+def filter_fixtures(fixtures: list[dict], target_league_ids: set[str]) -> list[dict]:
+    """Filtre les rencontres pour ne garder que celles des ligues cibles."""
+    return [
+        f for f in fixtures if str(f["league"]["id"]) in target_league_ids
+    ]
+
+
+def main() -> None:
+    # Date du jour au format YYYY-MM-DD
+    today = datetime.now().strftime("%Y-%m-%d")
+    target_leagues = load_target_league_ids()
+    fixtures = get_fixtures_today(today)
+    filtered = filter_fixtures(fixtures, target_leagues)
+    # Affichage simple
+    for match in filtered:
+        league = match["league"]["name"]
+        home = match["teams"]["home"]["name"]
+        away = match["teams"]["away"]["name"]
+        print(f"{league}: {home} vs {away}")
+
+
+if __name__ == "__main__":
     main() 
