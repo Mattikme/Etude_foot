@@ -2,8 +2,24 @@
 # -----------------------------------------------------
 # Liste des librairies Python nécessaires au projet
 # -----------------------------------------------------
-requests           # Pour envoyer les requêtes HTTP à l'API
-python-dotenv      # Pour gérer les clés API dans un fichier .env (optionnel)
-PyYAML             # Pour lire les fichiers de configuration YAML (ex: clés, ligues)
-pandas             # Pour manipuler les données tabulaires
-retry              # Pour réessayer les appels API en cas d'échec temporaire
+
+# Appels HTTP et gestion des clés
+requests
+python-dotenv
+PyYAML
+retry
+
+# Manipulation de données
+pandas
+numpy
+
+# Machine learning & deep learning
+scikit-learn
+tensorflow  # pour l'implémentation du LSTM
+
+# Visualisation et dashboard
+matplotlib
+streamlit
+
+# Autres dépendances éventuelles
+pytest  # recommandé pour les tests unitaires
