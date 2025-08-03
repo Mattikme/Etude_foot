@@ -28,7 +28,7 @@ os.makedirs("data/raw/injuries", exist_ok=True)
 # Déterminer les ligues avec matchs aujourd’hui
 active_leagues = []
 for league_id in all_leagues:
-    fixture_path = f"data/raw/fixtures_{league_id}_{SEASON}.json"
+    fixture_path = f"data/raw/fixtures_<league_id>_<date>.json"
     if not os.path.exists(fixture_path):
         continue
 
