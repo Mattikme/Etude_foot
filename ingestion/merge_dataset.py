@@ -1,8 +1,3 @@
-# ingestion/merge_dataset.py
-# -----------------------------------------------------------------------------
-# Fusionne tous les fichiers JSON de fixtures actifs pour créer une base unique
-# -----------------------------------------------------------------------------
-
 import os
 import json
 import pandas as pd
@@ -43,4 +38,3 @@ else:
     else:
         df.to_csv(OUTPUT_FILE, index=False)
         print(f"✅ Base fusionnée pour les matchs du jour : {OUTPUT_FILE}")
- 
