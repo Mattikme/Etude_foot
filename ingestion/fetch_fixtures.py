@@ -15,6 +15,7 @@ TIMEZONE = "Europe/Paris"
 
 with open("config/target_league_ids.yaml") as f:
     target_leagues = yaml.safe_load(f)["leagues"]
+
 os.makedirs("data/raw", exist_ok=True)
 
 for league_id in target_leagues:
