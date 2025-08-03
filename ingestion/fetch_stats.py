@@ -24,7 +24,7 @@ with open("config/target_league_ids.yaml", "r") as f:
 os.makedirs("data/raw/stats", exist_ok=True)
 
 for league_id in target_leagues:
-    fixtures_path = f"data/raw/fixtures_{league_id}_{SEASON}.json"
+    fixtures_path = f"data/raw/fixtures_<league_id>_<date>.json"
     if not os.path.exists(fixtures_path):
         print(f"⚠️ Fixtures manquants pour ligue {league_id}, ignoré.")
         continue
