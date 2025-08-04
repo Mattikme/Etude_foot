@@ -1,9 +1,4 @@
 # pipeline/run_pipeline.py
-# ---------------------------------------------------------------------------
-# Orchestration complète du pipeline de paris football : ingestion, traitement,
-# analyse des value bets et évaluation des résultats précédents.
-# ---------------------------------------------------------------------------
-
 import os
 import sys
 import subprocess
@@ -25,7 +20,7 @@ STEPS = [
     "python ingestion/merge_dataset.py",
     "python preprocessing/create_lstm_sequences.py",
     "python modeling/lstm_model.py",
-    "python preprocessing/generate_rankings.py",  # ✅ Appelé ici une seule fois
+    "python preprocessing/generate_rankings.py",  # Génére rankings.csv
     "python evaluation/backtest_kelly.py",
 ]
 
@@ -34,7 +29,7 @@ for cmd in STEPS:
     result = subprocess.run(cmd, shell=True)
     if result.returncode != 0:
         print(f"❌ {cmd} s'est terminé avec un code {result.returncode}")
-        # break
+        # break  # Optionnel si tu veux stopper dès la première erreur
 
 # Analyse des paris du jour
 print("🔍 Analyse des value bets en cours...")
@@ -55,4 +50,4 @@ if os.path.exists(bets_yesterday):
 else:
     print(f"ℹ️ Aucun pari trouvé pour hier ({yesterday}), évaluation ignorée.")
 
-print("✅ Pipeline complet exécuté avec succès.") 
+print("✅ Pipeline complet exécuté avec succès.")
