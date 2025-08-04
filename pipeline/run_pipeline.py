@@ -26,6 +26,7 @@ STEPS = [
     "python ingestion/merge_dataset.py",
     "python preprocessing/create_lstm_sequences.py",
     "python modeling/lstm_model.py",
+    "python preprocessing/generate_rankings.py",
     "python evaluation/backtest_kelly.py",
 ]
 
