@@ -1,4 +1,3 @@
-
 # pipeline/run_pipeline.py
 # ---------------------------------------------------------------------------
 # Orchestration complète du pipeline de paris football : ingestion, traitement,
@@ -26,7 +25,7 @@ STEPS = [
     "python ingestion/merge_dataset.py",
     "python preprocessing/create_lstm_sequences.py",
     "python modeling/lstm_model.py",
-    "python preprocessing/generate_rankings.py",
+    "python preprocessing/generate_rankings.py",  # ✅ Appelé ici une seule fois
     "python evaluation/backtest_kelly.py",
 ]
 
@@ -35,15 +34,7 @@ for cmd in STEPS:
     result = subprocess.run(cmd, shell=True)
     if result.returncode != 0:
         print(f"❌ {cmd} s'est terminé avec un code {result.returncode}")
-        # break  # Décommenter si on veut stopper dès la première erreur
-
-# Génération du ranking
-print("🔄 Génération automatique du fichier data/rankings.csv à partir des statistiques...")
-ranking_result = subprocess.run("python generate_rankings.py", shell=True)
-if ranking_result.returncode != 0:
-    print("❌ Erreur lors de la génération du fichier rankings.csv")
-else:
-    print("✅ rankings.csv généré avec succès.")
+        # break
 
 # Analyse des paris du jour
 print("🔍 Analyse des value bets en cours...")
@@ -62,6 +53,6 @@ if os.path.exists(bets_yesterday):
     if result.returncode != 0:
         print("❌ Erreur dans evaluate_bets.py")
 else:
-    print("ℹ️ Aucun pari trouvé pour hier ({yesterday}), évaluation ignorée.")
+    print(f"ℹ️ Aucun pari trouvé pour hier ({yesterday}), évaluation ignorée.")
 
-print("✅ Pipeline complet exécuté avec succès.")
+print("✅ Pipeline complet exécuté avec succès.") 
