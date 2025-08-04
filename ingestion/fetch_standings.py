@@ -16,8 +16,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from utils.request_handler import get
 
-# Saison courante (format AAAA), ajustez si nécessaire
-SEASON = datetime.now().year
+# Saison courante (format AAAA), ajustez si nécessaire  
+# Utilisons 2024 car 2025 vient juste de commencer et a peu de données
+SEASON = 2024
 
 # Charger la liste des ligues (IDs)
 with open("config/target_league_ids.yaml") as f:
