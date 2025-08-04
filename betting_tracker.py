@@ -264,7 +264,9 @@ class BettingTracker:
                 'total_roi': 0,
                 'roi_percentage': 0,
                 'current_bankroll': config['current_bankroll'],
-                'profit_loss': 0
+                'profit_loss': 0,
+                'avg_odds': 0,
+                'pending_bets': 0
             }
         
         completed_bets = history_df[history_df['status'] == 'completed']
