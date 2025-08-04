@@ -1,7 +1,11 @@
-
 import os
+import sys
 import json
 import time
+
+# Correction pour les imports relatifs dans GitHub Actions
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from utils.request_handler import get
 
 BOOKMAKER_ID = 8  # Bet365
@@ -18,7 +22,6 @@ def fetch_and_save_odds():
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        # Correction : le fichier doit être un dict avec une clé "response"
         if "response" not in data or not isinstance(data["response"], list):
             print(f"❌ Format non valide dans {file}")
             continue
@@ -53,4 +56,4 @@ def fetch_and_save_odds():
                 print(f"❌ Erreur cotes fixture {fixture_id} : {e}")
 
 if __name__ == "__main__":
-    fetch_and_save_odds()
+    fetch_and_save_odds() 
