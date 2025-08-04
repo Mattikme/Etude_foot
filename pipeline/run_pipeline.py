@@ -19,7 +19,6 @@ STEPS = [
     "python ingestion/fetch_injuries.py",
     "python ingestion/fetch_standings.py",
     "python ingestion/fetch_player_stats.py",
-    # Remplacer Pinnacle par l'API‑Football pour les cotes
     "python ingestion/fetch_odds_api_football.py",
     "python preprocessing/match_odds_mapper.py",
     "python ingestion/merge_dataset.py",
@@ -35,5 +34,16 @@ for cmd in STEPS:
         print(f"❌ {cmd} s'est terminé avec un code {result.returncode}")
         # Vous pouvez décommenter la ligne suivante pour arrêter le pipeline en cas d'erreur :
         # break
+
+# Ajout du ranking
+print("🔄 Génération automatique du fichier data/rankings.csv à partir des statistiques...")
+
+ranking_result = subprocess.run("python generate_rankings.py", shell=True)
+if ranking_result.returncode != 0:
+    print("❌ Erreur lors de la génération du fichier rankings.csv")
+else:
+    print("✅ rankings.csv généré avec succès.")
+
+print("✅ Pipeline complet exécuté avec succès.")        # break
 
 print("✅ Pipeline complet exécuté avec succès.")
