@@ -1,4 +1,3 @@
-
 import os
 import json
 import pandas as pd
@@ -24,6 +23,8 @@ for file in fixtures_files:
     with open(file, "r", encoding="utf-8") as f:
         data = json.load(f)
         for match in data.get("response", []):
+            home = match["teams"]["home"]["name"]
+            away = match["teams"]["away"]["name"]
             fixture_id = match["fixture"]["id"]
             goals = match["goals"]
             if goals["home"] is not None and goals["away"] is not None:
@@ -32,18 +33,13 @@ for file in fixtures_files:
                     result = "Home"
                 elif goals["away"] > goals["home"]:
                     result = "Away"
-                fixture_results[fixture_id] = result
+                fixture_results[(home, away)] = result
 
 # Évaluation des paris
 for _, row in bets_df.iterrows():
     home, away = row["match"].split(" vs ")
-    matched_fixture = None
-    for fid, res in fixture_results.items():
-        if home in str(fid) or away in str(fid):
-            matched_fixture = fid
-            break
-    if matched_fixture and matched_fixture in fixture_results:
-        actual = fixture_results[matched_fixture]
+    actual = fixture_results.get((home, away))
+    if actual:
         won = actual == row["bet_on"]
         roi = row["bookmaker_odds"] - 1 if won else -1
         results.append({
