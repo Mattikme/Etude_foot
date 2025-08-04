@@ -1,162 +1,138 @@
-# Prédictor de résultats football API-Football
+# API Football Predictor
 
-## 🚀 Objectif du projet
+## 📄 Objectif
 
-Ce projet open-source permet de prédire les résultats de matchs de football à partir de données fournies par l'API-Football. Il combine des scripts d'extraction, d'analyse, de traitement des données et de visualisation des probabilités de victoire basées sur plusieurs stratégies.
-
-Le but final est de proposer des **pronostics intelligents** pouvant être comparés aux cotes réelles des bookmakers (Bet365, Pinnacle, etc.) et repérer des **valeurs (value bets)**.
+Ce projet prédit les résultats de matchs de football à l’aide de données issues de l’API-Football sur RAPIDAPI. Il couvre toutes les étapes : ingestion, prétraitement, modélisation (LSTM), détection de value bets, et évaluation automatique des résultats.
 
 ---
 
-## 📝 Fonctionnalités principales
-
-* 📊 Collecte automatique des matchs du jour pour de nombreuses ligues
-* 🔬 Récupération des statistiques, compositions, et cotes
-* 🧬 Application de stratégies de prédiction (ELO, forme récente, stats, etc.)
-* 📈 Enregistrement des données brutes et transformées (JSON)
-* 🔗 Comparaison avec les cotes pour repérer des valeurs
-* 🌐 Visualisation future des paris suggérés (en cours de développement)
-
----
-
-## 🤧 Structure technique
+## 📁 Structure du répertoire
 
 ```
 api-football-predictor/
-├── config/                  # Configuration API, ligues cibles, chemins
-├── data/
-│   ├── raw/               # Fichiers bruts : fixtures, odds, stats, lineups
-│   └── processed/         # Prédictions, matchups avec analyse
-├── ingestion/               # Scripts de collecte de données (fetch_*.py)
-├── pipeline/                # Script principal : run_pipeline.py
-├── utils/                   # Fonctions communes : requêtes, stratégies
-├── notebooks/               # Analyses exploratoires (optionnel)
-├── outputs/                 # Logs, prédictions futures (format lisible)
-└── README.md                # Document actuel
+├── data/                         # Données collectées et générées
+│   ├── raw/                     # JSONs bruts (fixtures, odds, standings, etc.)
+│   │   ├── fixtures_*.json     # Matchs par ligue et date
+│   │   ├── odds_*.json         # Cotes associées aux matchs
+│   │   └── standings/          # Classements par ligue (JSON)
+│   ├── processed/              # Fichiers CSV prêts pour modélisation
+│   │   └── base_matches.csv    # Fichier fusionné principal (features + cotes)
+│   ├── lstm/                   # Séquences LSTM + prédictions
+│   ├── bets_today.csv          # Value bets détectés aujourd’hui
+│   ├── bets_YYYY-MM-DD.csv     # Bets d’un jour précis
+│   ├── bets_results_*.csv      # Résultats évalués (gagné ou perdu)
+│   └── rankings.csv            # Classement pondéré généré (importance des équipes)
+│
+├── ingestion/                  # Scripts de récupération via l'API
+│   ├── fetch_fixtures.py       # Matchs à venir
+│   ├── fetch_stats.py          # Statistiques complètes de match
+│   ├── fetch_lineups.py        # Compositions d’équipes
+│   ├── fetch_events.py         # Evénements (buts, cartons, etc.)
+│   ├── fetch_injuries.py       # Blessures
+│   ├── fetch_standings.py      # Classements de ligue (pour ranking)
+│   ├── fetch_player_stats.py   # Statistiques individuelles des joueurs
+│   └── fetch_odds_api_football.py  # Cotes des bookmakers
+
+├── preprocessing/              # Préparation des données
+│   ├── match_odds_mapper.py    # Fusionne les odds avec les features
+│   ├── create_lstm_sequences.py# Préparation des données LSTM
+│   └── generate_rankings.py       # Classement pondéré des équipes
+
+├── modeling/                   # Modèle de prédiction
+│   └── lstm_model.py             # Réseau de neurones LSTM pour issue match
+
+├── evaluation/                 # Outils d'évaluation
+│   ├── backtest_kelly.py         # Backtest via critère de Kelly
+│   └── evaluate_bets.py          # Analyse réelle des bets d’hier
+
+├── pipeline/                   # Orchestration complète
+│   └── run_pipeline.py          # Lance toutes les étapes automatiquement
+
+├── utils/                      # Outils génériques
+│   └── request_handler.py       # Appel API avec gestion d’erreur/temporisation
+
+├── .env                        # Contient API_FOOTBALL_KEY
+├── requirements.txt            # Dépendances Python
+└── README.md                   # Ce fichier
 ```
 
 ---
 
-## 🔢 Fonctionnement
-
-### 1. Configuration
-
-* Clé API à ajouter dans `config/api_keys.yaml` :
-
-```yaml
-api_football:
-  key: VOTRE_CLE
-  host: v3.football.api-sports.io
-```
-
-* Ligues cibles dans `config/target_league_ids.yaml` (dict ou liste d'IDs)
-
----
-
-### 2. Pipeline principal
-
-Lancement manuel ou via GitHub Actions :
+## ⚡ Lancer le pipeline automatiquement
 
 ```bash
 python pipeline/run_pipeline.py
 ```
 
-Ce script :
+Cela :
 
-1. Récupère les matchs du jour (`fixtures`)
-2. Récupère stats, cotes et compositions par match
-3. Applique les stratégies de prédiction
-4. Sauvegarde les outputs dans `data/processed/`
-
----
-
-### 3. Stratégies de prédiction
-
-* ELO (classement dynamique)
-* Comparaison stats domicile / extérieur
-* Forme récente (victoires, buts)
-* Alignements d'équipe (optionnel)
-* Possibilité d'ajouter vos propres méthodes dans `utils/strategies.py`
+* collecte les données
+* génère `base_matches.csv` et `rankings.csv`
+* lance le modèle LSTM
+* identifie les value bets dans `data/bets_today.csv`
+* évalue les paris d’hier automatiquement si disponibles
 
 ---
 
-### 4. Cotes bookmakers
+## 🔍 Analyse des fichiers clefs
 
-* Requêtes par match sur `/odds?fixture=<id>&bookmaker=8` (Bet365)
-* Stockage dans `data/raw/odds_<fixture_id>.json`
+### Données `data/`
 
----
+* `data/raw/fixtures_*.json` : données de chaque match par ligue
+* `data/processed/base_matches.csv` : ensemble fusionné avec toutes les features utiles
+* `data/bets_today.csv` : tableau des meilleurs value bets du jour (triés)
+* `data/rankings.csv` : score des équipes calculé à partir des standings
 
-### 5. Analyse des values
+### Ingestion `ingestion/`
 
-Une fois les probabilités estimées, le système calcule si la cote propose une **value** :
+* Chaque script appelle l'API-Football pour un type précis de donnée
 
-```python
-value = (proba_estimee * cote_bookmaker) - 1 > 0.05
-```
+### Traitement `preprocessing/`
 
----
+* `generate_rankings.py` : transforme les standings API en score unique d’équipe
+* `match_odds_mapper.py` : fusionne cotes + classement + features en table finale
 
-## 📊 Visualisation (future)
+### Modélisation `modeling/`
 
-* Une interface Streamlit ou web est prévue pour afficher les matchs du jour avec :
+* `lstm_model.py` : prédit les probabilités de Home / Draw / Away
 
-  * Probabilités prédites vs. cotes Bet365
-  * Mise recommandée
-  * Historique des performances
+### Evaluation `evaluation/`
 
----
+* `backtest_kelly.py` : simule les bets avec mise proportionnelle
+* `evaluate_bets.py` : vérifie si les paris d’hier étaient gagnants ou non
 
-## 🚧 En cours ou idées d'amélioration
+### Pipeline `run_pipeline.py`
 
-* Modèle ML / xG basé sur historique complet
-* Intégration avec Telegram ou email (alerte value bets)
-* Historique ELO global
-* Simulateur de bankroll
+* Orchestre toutes les étapes, y compris :
 
----
-
-## 📆 Automatisation
-
-* GitHub Actions exécute le pipeline chaque jour
-* Workflow `run-pipeline.yml` déclenche :
-
-  * `run_pipeline.py`
-  * et consigne tous les logs dans les artefacts
+  * génération automatique des rankings
+  * analyse automatique des paris
+  * sauvegarde des résultats de la veille
 
 ---
 
-## 🚫 Limitations / Conseils
+## 📆 Exemple de sortie `data/bets_today.csv`
 
-* Le modèle **ne garantit pas** un profit : c'est un outil de soutien
-* Ne pas parier au-delà de vos moyens
-* API RapidAPI a des quotas : préférez la clé directe API-Football si possible
-
----
-
-## 🎓 Sources utiles
-
-* [API-Football Docs](https://www.api-football.com/documentation)
-* [RapidAPI Endpoint Explorer](https://rapidapi.com/api-sports/api/api-football)
-* Modèles inspirés des travaux d'évaluation ELO + value betting
+| match        | bet\_on | bookmaker\_odds | expected\_prob | expected\_value |
+| ------------ | ------- | --------------- | -------------- | --------------- |
+| Lyon vs Nice | Home    | 2.35            | 0.55           | 0.29            |
 
 ---
 
-## 🚀 Lancement rapide
+## 🤝 Améliorations possibles
 
-```bash
-# 1. Installer les dépendances
-pip install -r requirements.txt
-
-# 2. Ajouter vos clés et ligues dans /config
-
-# 3. Lancer le pipeline
-python pipeline/run_pipeline.py
-
-# 4. Consulter les fichiers data/processed/
-```
+* Calibration dynamique des expected\_prob
+* Modèle XGBoost ou Deep Learning supplémentaire
+* Dashboard interactif avec Streamlit
 
 ---
 
-**Bon prono ⚽ ✨ et pariez de manière responsable.**
- 
+## 👤 Auteur
+
+* [@Matttgic](https://github.com/Matttgic)
+
+---
+
+## 📚 Licence
+
+MIT
