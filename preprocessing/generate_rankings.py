@@ -1,80 +1,49 @@
 # preprocessing/generate_rankings.py
-# ---------------------------------------------------------
-# Génère un classement simple basé sur les statistiques de match (wins/games)
-# ---------------------------------------------------------
-
 import os
 import json
 import pandas as pd
 from glob import glob
 
-RAW_DATA_DIR = "data/raw"
+INPUT_FOLDER = "data/raw"
 OUTPUT_FILE = "data/rankings.csv"
 
-def extract_team_stats(stats):
-    home = stats.get("teams", {}).get("home", {})
-    away = stats.get("teams", {}).get("away", {})
-
-    result = {}
-    for team in [home, away]:
-        name = team.get("name")
-        wins = team.get("statistics", {}).get("wins", {}).get("total")
-        played = team.get("statistics", {}).get("played", {}).get("total")
-
-        if name and wins is not None and played is not None:
-            result[name] = {
-                "games_played": played,
-                "wins": wins
-            }
-    return result
+def compute_team_strength(stats):
+    """Calcule un score simple basé sur les performances générales."""
+    try:
+        goals_for = stats["goals"]["for"]["total"]["total"] or 0
+        goals_against = stats["goals"]["against"]["total"]["total"] or 1  # éviter division par 0
+        form = stats.get("form", "").count("W")  # nombre de victoires récentes
+        return (goals_for / goals_against) + form
+    except:
+        return 0
 
 def main():
-    stats_files = glob(os.path.join(RAW_DATA_DIR, "stats_*.json"))
+    stats_files = glob(os.path.join(INPUT_FOLDER, "stats_*.json"))
     if not stats_files:
         print("❌ Aucun fichier de stats trouvé.")
         return
 
-    team_stats = {}
+    team_scores = []
 
     for path in stats_files:
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                for match in data.get("response", []):
-                    match_stats = extract_team_stats(match)
-                    for team, stats in match_stats.items():
-                        if team not in team_stats:
-                            team_stats[team] = {"games_played": 0, "wins": 0}
-                        team_stats[team]["games_played"] += stats["games_played"]
-                        team_stats[team]["wins"] += stats["wins"]
-        except Exception as e:
-            print(f"⚠️ Erreur lecture {path} : {e}")
-            continue
+        with open(path, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+            for team_stats in raw.get("response", []):
+                team = team_stats["team"]["name"]
+                stats = team_stats["statistics"]
+                score = compute_team_strength(stats)
+                team_scores.append((team, score))
 
-    rows = []
-    for team, stats in team_stats.items():
-        games_played = stats.get("games_played", 0)
-        wins = stats.get("wins", 0)
-
-        if games_played == 0:
-            continue  # Évite division par zéro
-
-        win_rate = wins / games_played
-        rows.append({
-            "team": team,
-            "games_played": games_played,
-            "wins": wins,
-            "win_rate": win_rate
-        })
-
-    if not rows:
-        print("❌ Aucun ranking exploitable, fichier non généré.")
+    if not team_scores:
+        print("❌ Aucune statistique de team valide trouvée.")
         return
 
-    df_rankings = pd.DataFrame(rows).sort_values(by="win_rate", ascending=False)
-    df_rankings["ranking"] = range(1, len(df_rankings) + 1)
-    df_rankings.to_csv(OUTPUT_FILE, index=False)
-    print("✅ Fichier rankings.csv généré avec succès.")
+    df = pd.DataFrame(team_scores, columns=["team", "score"])
+    df = df.groupby("team").mean().reset_index()
+    df["ranking"] = df["score"].rank(ascending=False, method="min").astype(int)
+    df = df.sort_values("ranking")
+    df.to_csv(OUTPUT_FILE, index=False)
+    print(f"✅ Fichier rankings sauvegardé dans {OUTPUT_FILE}")
 
 if __name__ == "__main__":
-    main() 
+    main()
