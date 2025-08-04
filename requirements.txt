@@ -19,6 +19,8 @@ tensorflow  # pour l'implémentation du LSTM
 
 # Visualisation et dashboard
 matplotlib
+seaborn
+plotly
 streamlit
 
 # Autres dépendances éventuelles
