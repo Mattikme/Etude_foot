@@ -1,73 +1,80 @@
 # preprocessing/generate_rankings.py
-import os
-import pandas as pd
-from collections import defaultdict
+# ---------------------------------------------------------
+# Génère un classement simple basé sur les statistiques de match (wins/games)
+# ---------------------------------------------------------
 
-RAW_DIR = "data/raw"
-OUTPUT_PATH = "data/rankings.csv"
+import os
+import json
+import pandas as pd
+from glob import glob
+
+RAW_DATA_DIR = "data/raw"
+OUTPUT_FILE = "data/rankings.csv"
+
+def extract_team_stats(stats):
+    home = stats.get("teams", {}).get("home", {})
+    away = stats.get("teams", {}).get("away", {})
+
+    result = {}
+    for team in [home, away]:
+        name = team.get("name")
+        wins = team.get("statistics", {}).get("wins", {}).get("total")
+        played = team.get("statistics", {}).get("played", {}).get("total")
+
+        if name and wins is not None and played is not None:
+            result[name] = {
+                "games_played": played,
+                "wins": wins
+            }
+    return result
 
 def main():
-    team_stats = defaultdict(lambda: {"wins": 0, "draws": 0, "losses": 0, "games": 0})
+    stats_files = glob(os.path.join(RAW_DATA_DIR, "stats_*.json"))
+    if not stats_files:
+        print("❌ Aucun fichier de stats trouvé.")
+        return
 
-    # On balaye tous les fichiers fixtures existants
-    for filename in os.listdir(RAW_DIR):
-        if filename.startswith("fixtures_") and filename.endswith(".json"):
-            filepath = os.path.join(RAW_DIR, filename)
-            try:
-                df = pd.read_json(filepath)
-                for match in df:
-                    fixture = match.get("fixture", {})
-                    teams = match.get("teams", {})
-                    goals = match.get("goals", {})
+    team_stats = {}
 
-                    if not fixture or not teams or not goals:
-                        continue
+    for path in stats_files:
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                for match in data.get("response", []):
+                    match_stats = extract_team_stats(match)
+                    for team, stats in match_stats.items():
+                        if team not in team_stats:
+                            team_stats[team] = {"games_played": 0, "wins": 0}
+                        team_stats[team]["games_played"] += stats["games_played"]
+                        team_stats[team]["wins"] += stats["wins"]
+        except Exception as e:
+            print(f"⚠️ Erreur lecture {path} : {e}")
+            continue
 
-                    home = teams["home"]["name"]
-                    away = teams["away"]["name"]
-                    home_goals = goals["home"]
-                    away_goals = goals["away"]
-
-                    if home_goals is None or away_goals is None:
-                        continue  # Match pas encore joué
-
-                    team_stats[home]["games"] += 1
-                    team_stats[away]["games"] += 1
-
-                    if home_goals > away_goals:
-                        team_stats[home]["wins"] += 1
-                        team_stats[away]["losses"] += 1
-                    elif away_goals > home_goals:
-                        team_stats[away]["wins"] += 1
-                        team_stats[home]["losses"] += 1
-                    else:
-                        team_stats[home]["draws"] += 1
-                        team_stats[away]["draws"] += 1
-
-            except Exception as e:
-                print(f"❌ Erreur lecture {filename} : {e}")
-
-    # Convertir en DataFrame
     rows = []
     for team, stats in team_stats.items():
-        total = stats["games"]
-        if total == 0:
-            continue
-        win_rate = stats["wins"] / total
-        draw_rate = stats["draws"] / total
-        loss_rate = stats["losses"] / total
+        games_played = stats.get("games_played", 0)
+        wins = stats.get("wins", 0)
+
+        if games_played == 0:
+            continue  # Évite division par zéro
+
+        win_rate = wins / games_played
         rows.append({
             "team": team,
-            "games": total,
-            "win_rate": round(win_rate, 3),
-            "draw_rate": round(draw_rate, 3),
-            "loss_rate": round(loss_rate, 3),
+            "games_played": games_played,
+            "wins": wins,
+            "win_rate": win_rate
         })
 
+    if not rows:
+        print("❌ Aucun ranking exploitable, fichier non généré.")
+        return
+
     df_rankings = pd.DataFrame(rows).sort_values(by="win_rate", ascending=False)
-    os.makedirs("data", exist_ok=True)
-    df_rankings.to_csv(OUTPUT_PATH, index=False)
-    print(f"✅ rankings.csv généré avec {len(df_rankings)} équipes.")
+    df_rankings["ranking"] = range(1, len(df_rankings) + 1)
+    df_rankings.to_csv(OUTPUT_FILE, index=False)
+    print("✅ Fichier rankings.csv généré avec succès.")
 
 if __name__ == "__main__":
-    main()
+    main() 
