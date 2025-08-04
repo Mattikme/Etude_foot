@@ -27,11 +27,37 @@ def load_predictions():
     print(f"✅ {len(predictions_df)} prédictions LSTM chargées")
     return predictions_df
 
+def load_fixture_mapping():
+    """Crée un mapping fixture_id -> noms des équipes"""
+    fixtures_files = glob("data/raw/fixtures_*_2025-08-04.json")
+    fixture_mapping = {}
+    
+    for fixtures_file in fixtures_files:
+        try:
+            with open(fixtures_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            
+            for match in data.get("response", []):
+                fixture_id = match.get("fixture", {}).get("id")
+                home_team = match.get("teams", {}).get("home", {}).get("name")
+                away_team = match.get("teams", {}).get("away", {}).get("name")
+                
+                if fixture_id and home_team and away_team:
+                    fixture_mapping[fixture_id] = f"{home_team} vs {away_team}"
+                    
+        except Exception as e:
+            print(f"⚠️ Erreur lecture fixtures {fixtures_file}: {e}")
+            continue
+    
+    return fixture_mapping
+
 def load_odds_data():
     """Charge et structure les données de cotes"""
     if not ODDS_PATHS:
         raise FileNotFoundError("❌ Aucun fichier de cotes trouvé dans data/raw/")
     
+    # Charger le mapping fixture_id -> équipes
+    fixture_mapping = load_fixture_mapping()
     all_odds = {}
     
     for odds_path in ODDS_PATHS:
@@ -44,15 +70,12 @@ def load_odds_data():
                 if "bookmakers" not in match_odds:
                     continue
                 
-                fixture = match_odds.get("fixture", {})
-                teams = match_odds.get("teams", {})
-                home_team = teams.get("home", {}).get("name", "")
-                away_team = teams.get("away", {}).get("name", "")
-                
-                if not home_team or not away_team:
+                # Récupérer fixture_id et les noms des équipes
+                fixture_id = match_odds.get("fixture", {}).get("id")
+                if fixture_id not in fixture_mapping:
                     continue
                 
-                match_key = f"{home_team} vs {away_team}"
+                match_key = fixture_mapping[fixture_id]
                 
                 # Chercher les cotes Bet365
                 for bookmaker in match_odds["bookmakers"]:
