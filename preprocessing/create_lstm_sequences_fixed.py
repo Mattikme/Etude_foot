@@ -102,7 +102,13 @@ def simulate_training_data(n_samples=1000):
         # Contraindre les probabilités
         prob_home = max(0.1, min(0.8, prob_home))
         prob_away = max(0.1, min(0.8, prob_away))
-        prob_draw = max(0.1, 1.0 - prob_home - prob_away)
+        prob_draw = max(0.1, min(0.8, prob_draw))
+        
+        # Normaliser pour que la somme soit exactement 1
+        total = prob_home + prob_draw + prob_away
+        prob_home /= total
+        prob_draw /= total
+        prob_away /= total
         
         # Choisir le résultat selon ces probabilités
         outcome = np.random.choice(3, p=[prob_home, prob_draw, prob_away])
